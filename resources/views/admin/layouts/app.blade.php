@@ -224,7 +224,7 @@
 
     </aside>
 
-    <div class="content-wrapper">
+    <div class="content-wrapper pb-[20px]">
 
         <router-view></router-view>
 
