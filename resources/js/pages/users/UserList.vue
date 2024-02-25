@@ -6,6 +6,7 @@ import {ExclamationTriangleIcon} from '@heroicons/vue/24/outline';
 import * as yup from 'yup';
 import {useToaster} from "../../toastr.js";
 import UserListItem from "./UserListItem.vue";
+import {debounce} from "lodash-es";
 
 const isDialog = ref(false);
 const isDangerDialog = ref(false);
@@ -14,6 +15,19 @@ const editMode = ref(false);
 const formValues = ref();
 const toastr = useToaster();
 const userId=ref();
+const searchQuery=ref(null);
+
+const searchUser=async()=>{
+    await axios.get('/api/users/search',{
+        params:{
+            query:searchQuery.value
+        }
+    }).then(resp=>{
+        users.value=resp.data;
+    }).catch(err=>{
+        console.log(err)
+    })
+}
 
 const createUserSchema = yup.object({
     name: yup.string().required(),
@@ -35,7 +49,10 @@ watch(isDialog, () => {
             email: '',
         };
     }
-})
+});
+watch(searchQuery,debounce(()=>{
+   searchUser();
+},300));
 const handleSubmit = (values, actions) => {
     if (editMode.value) {
         updateUser(values, actions);
@@ -46,7 +63,9 @@ const handleSubmit = (values, actions) => {
 const createUser = (values, actions) => {
     axios.post('/api/users', values)
         .then(response => {
-            users.value.unshift(response.data);
+            let userData=response.data;
+            userData.role='USER'
+            users.value.unshift(userData);
             isDialog.value = false;
             actions.resetForm();
             toastr.success('User created successful')
@@ -172,8 +191,11 @@ onMounted(() => {
     </TransitionRoot>
     <div class="container">
         <div class="container-fluid">
-            <button @click="isDialog = true; editMode=false;" class="btn bg-blue-700 mb-3 text-white">Add new User
-            </button>
+            <div class="flex justify-between">
+                <button @click="isDialog = true; editMode=false;" class="btn bg-blue-700 mb-3 text-white">Add new User
+                </button>
+                <input v-model="searchQuery" type="text" name="search" id="search" class="rounded-md border-0 h-[40px] pl-3 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Search..." />
+            </div>
             <TransitionRoot as="template" :show="isDialog">
                 <Dialog as="div" class="relative z-10 " @close="isDialog = false">
                     <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0"
@@ -274,10 +296,17 @@ onMounted(() => {
                         </th>
                     </tr>
                     </thead>
-                    <tbody>
+                    <tbody v-if="users.length">
                     <UserListItem v-for="user in users" :key="user.id" :user="user"
-                    @show-danger-dialog="showDangerDialog"
-                    @edit-user="editUser"/>
+                        @show-danger-dialog="showDangerDialog"
+                        @edit-user="editUser"/>
+                    </tbody>
+                    <tbody v-else>
+                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <th colspan="6" class="text-center px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                No results found...
+                            </th>
+                        </tr>
                     </tbody>
                 </table>
             </div>

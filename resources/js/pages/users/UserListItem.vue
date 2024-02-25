@@ -1,27 +1,42 @@
 <script setup>
-import {ref} from 'vue';
+import {ref, watch} from 'vue';
 import {formatDate} from "../../helper.js";
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid';
+import {useToaster} from "@/toastr.js";
 
 const props=defineProps({
     user:Object,
 });
 const emit = defineEmits(['showDangerDialog','editUser']);
+const toastr = useToaster();
+
 const userRoles = [
     {
         id:1,
         name:'USER',
-        value:1,
+        value:2,
     },
     {
         id:2,
         name:'ADMIN',
-        value:2,
+        value:1,
     },
 
 ]
 const selected = ref(props.user.role);
+const changeUserRole=()=>{
+    console.log(selected.value)
+    axios.patch(`/api/users/${props.user.id}/change-role`, {'role':selected.value.value})
+        .then(()=>{
+            toastr.success('Role changed successfully')
+        }).catch(err=>{
+            console.log(err);
+    })
+}
+watch(selected,()=>{
+    changeUserRole();
+})
 
 </script>
 
@@ -40,12 +55,12 @@ const selected = ref(props.user.role);
             {{ formatDate(user.created_at) }}
         </td>
         <td class="px-6 py-2">
-            <Listbox as="div" v-model="selected">
+            <Listbox as="div" v-model="selected" >
                 <div class="relative">
                     <ListboxButton
                         class="relative w-full cursor-default rounded-md bg-gray-50 py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm sm:leading-6">
                         <span class="flex items-center">
-                          <span class="ml-1 block truncate">{{ selected.role ? selected.role : selected}}</span>
+                          <span class="ml-1 block truncate">{{ selected.name ? selected.name : selected}}</span>
                         </span>
                         <span class="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
                           <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true"/>
@@ -56,7 +71,7 @@ const selected = ref(props.user.role);
                                 leave-to-class="opacity-0">
                         <ListboxOptions
                             class="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                            <ListboxOption as="template" v-for="role in userRoles" :key="role.id" :value="role.name"
+                            <ListboxOption as="template" v-for="role in userRoles" :key="role.id" :value="role"
                                            v-slot="{ active, selected }">
                                 <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
                                     <div class="flex items-center">
