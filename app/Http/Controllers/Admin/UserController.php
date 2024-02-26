@@ -12,7 +12,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users=User::latest()->get();
+        $users=User::latest()->paginate(10);
 
         return $users;
     }
@@ -64,6 +64,12 @@ class UserController extends Controller
         return response()->noContent();
     }
 
+    public function bulkDelete()
+    {
+        User::whereIn('id',request('ids'))->delete();
+        return response()->json(['message'=>'Users deleted successfully!']);
+    }
+
 //    public function search(Request $request)
 //    {
 //        $searchQuery=$request->query;
@@ -89,7 +95,7 @@ class UserController extends Controller
             $query->where('name', 'like', "%{$searchQuery}%"); // Placeholder, use parameterized query
         }
 
-        $users = $query->get();
+        $users = $query->paginate(10);
 
         // Consider pagination for large datasets
         // $users = $query->paginate(15); // Adjust page size as needed

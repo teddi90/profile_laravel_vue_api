@@ -1,40 +1,28 @@
 <script setup>
+import AppointmentListItem from "./AppointmentListItem.vue";
 import {onMounted, ref, watch} from "vue";
-import {Form, Field} from "vee-validate"
-import {Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot} from '@headlessui/vue';
-import {ExclamationTriangleIcon} from '@heroicons/vue/24/outline';
-import * as yup from 'yup';
 import {useToaster} from "../../toastr.js";
-import UserListItem from "./UserListItem.vue";
-import {debounce} from "lodash-es";
-import { Bootstrap5Pagination } from 'laravel-vue-pagination';
+import {Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot} from "@headlessui/vue";
+import {ExclamationTriangleIcon} from '@heroicons/vue/24/outline';
+import {Field, Form} from "vee-validate";
+import * as yup from "yup";
+import {Bootstrap5Pagination} from "laravel-vue-pagination";
+
+const appointmentsStatus={'scheduled':1,'confirmed':2,'cancelled':3,}
+const appointments = ref({data:[]});
 const isDialog = ref(false);
 const isDangerDialog = ref(false);
-const users = ref({data:[]});
 const editMode = ref(false);
+const appointmentId = ref();
 const formValues = ref();
 const toastr = useToaster();
-const userId=ref();
-const searchQuery=ref(null);
 
-const searchUser=async()=>{
-    await axios.get('/api/users/search',{
-        params:{
-            query:searchQuery.value
-        }
-    }).then(resp=>{
-        users.value=resp.data;
-    }).catch(err=>{
-        console.log(err)
-    })
-}
-
-const createUserSchema = yup.object({
+const createAppointmentSchema = yup.object({
     name: yup.string().required(),
     email: yup.string().email().required(),
     password: yup.string().required().min(8),
 });
-const editUserSchema = yup.object({
+const editAppointmentSchema = yup.object({
     name: yup.string().required(),
     email: yup.string().email().required(),
     password: yup.string().when((password, schema) => {
@@ -50,112 +38,75 @@ watch(isDialog, () => {
         };
     }
 });
-watch(searchQuery,debounce(()=>{
-   searchUser();
-},300));
+const getAppointments = async (status, page=1) => {
+    const params={};
+    if(status){
+        params.status=status;
+    }
+    const resp = await axios.get(`/api/appointments?page=${page}`,{params:params});
+    appointments.value = resp.data;
+}
 const handleSubmit = (values, actions) => {
     if (editMode.value) {
-        updateUser(values, actions);
+        updateAppointment(values, actions);
     } else {
-        createUser(values, actions);
+        createAppointment(values, actions);
     }
 }
-const createUser = (values, actions) => {
-    axios.post('/api/users', values)
+const createAppointment = (values, actions) => {
+    axios.post('/api/appointments', values)
         .then(response => {
-            let userData=response.data;
-            userData.role='USER'
-            users.value.data.unshift(userData);
+            let appointmentData = response.data;
+            appointmentData.role = 'USER'
+            appointments.value.data.unshift(appointmentData);
             isDialog.value = false;
             actions.resetForm();
-            toastr.success('User created successful')
+            toastr.success('Appointment created successful')
         }).catch((error) => {
         if (error.response.data.errors) {
             actions.setErrors(error.response.data.errors);
         }
     });
 }
-const showDangerDialog=(user)=>{
-    isDangerDialog.value=true;
-    userId.value=user.id;
+const showDangerDialog = (appointment) => {
+    isDangerDialog.value = true;
+    appointmentId.value = appointment.id;
 }
-const editUser = (user) => {
+const editAppointment = (appointment) => {
     isDialog.value = true;
     editMode.value = true;
     formValues.value = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
+        id: appointment.id,
+        name: appointment.name,
+        email: appointment.email,
     };
 }
-const updateUser = (values, actions) => {
-    axios.put('/api/users/' + values.id, values)
+const updateAppointment = (values, actions) => {
+    axios.put('/api/appointments/' + values.id, values)
         .then((resp => {
-            const index = users.value.findIndex(user => user.id === values.id);
-            users.value[index] = resp.data;
+            const index = appointments.value.findIndex(appointment => appointment.id === values.id);
+            appointments.value[index] = resp.data;
             actions.resetForm();
             isDialog.value = false;
-            toastr.success('User updated successful');
+            toastr.success('Appointment updated successful');
         })).catch((error) => {
         if (error.response.data.errors) {
             actions.setErrors(error.response.data.errors);
         }
     });
 }
-const deleteUser = () => {
-    axios.delete('/api/users/' + userId.value)
+const deleteAppointment = () => {
+    axios.delete('/api/appointments/' + appointmentId.value)
         .then(resp => {
-            // const index = users.value.findIndex(user => user.id === userId.value);
-            // users.value.splice(index,1);
-            users.value = users.value.filter(user => user.id !== userId.value);
-            toastr.success('User deleted successful');
-            isDangerDialog.value=false;
-        }).catch(err=>{
+            appointments.value = appointments.value.filter(appointment => appointment.id !== appointmentId.value);
+            toastr.success('Appointment deleted successful');
+            isDangerDialog.value = false;
+        }).catch(err => {
         console.log(err);
     })
 }
-
-const getUsers = async (page=1) => {
-    const response = await axios(`/api/users?page=${page}`);
-    users.value = response.data;
-    selectedUsers.value=[];
-    selectAll.value=false;
-}
-const selectedUsers=ref([]);
-const toggleSelection=(user)=>{
-    const index=selectedUsers.value.indexOf(user.id);
-    if(index===-1){
-        selectedUsers.value.push(user.id);
-    }else {
-        selectedUsers.value.splice(index,1);
-    }
-};
-
-const bulkDelete = () => {
-    axios.delete('/api/users', {
-        data: {
-            ids: selectedUsers.value,
-        }
-    }).then((resp) => {
-        users.value.data = users.value.data.filter(user => !selectedUsers.value.includes(user.id));
-        selectedUsers.value=[];
-        selectAll.value=false;
-        toastr.success(resp.data.message);
-    }).catch(err => {
-        console.log(err);
-    })
-};
-const selectAll=ref(false);
-const selectAllUsers=()=>{
-    if(selectAll.value){
-        selectedUsers.value=users.value.data.map(user=>user.id);
-    }else {
-        selectedUsers.value=[];
-    }
-}
-
-onMounted(() => {
-    getUsers();
+onMounted(()=>{
+    getAppointments();
 })
 </script>
 
@@ -164,18 +115,17 @@ onMounted(() => {
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Users</h1>
+                    <h1 class="m-0">Appointments</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <router-link :to="{name:'admin.dashboard'}" class="breadcrumb-item">Home</router-link>
-                        <li class="breadcrumb-item active">Users</li>
+                        <li class="breadcrumb-item active">Appointments</li>
                     </ol>
                 </div>
             </div>
         </div>
     </div>
-
     <!--  Delete modal-->
     <TransitionRoot as="template" :show="isDangerDialog">
         <Dialog as="div" class="relative z-10" @close="isDangerDialog = false">
@@ -201,7 +151,7 @@ onMounted(() => {
                                     </div>
                                     <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
                                         <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">Are
-                                            you sure you want to delete this User
+                                            you sure you want to delete this Appointment
                                         </DialogTitle>
 
                                     </div>
@@ -210,7 +160,7 @@ onMounted(() => {
                             <div class="bg-white px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                                 <button type="button"
                                         class="mt-3 inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
-                                        @click="deleteUser()">Delete
+                                        @click="deleteAppointment()">Delete
                                 </button>
                                 <button type="button"
                                         class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
@@ -223,21 +173,34 @@ onMounted(() => {
             </div>
         </Dialog>
     </TransitionRoot>
-    <div class="container">
+
+    <div class="content">
         <div class="container-fluid">
             <div class="flex justify-between">
                 <div class="mb-3 flex items-center">
                     <button @click="isDialog = true; editMode=false;" class="btn mr-2 bg-blue-700 hover:bg-blue-800 text-white">
                         <i class="fa fa-plus-circle mr-1"></i>
-                        Add new User
+                        Add new Appointment
                     </button>
-                    <button :disabled="selectedUsers.length<1" @click="bulkDelete" class="btn bg-danger hover:bg-red-800 text-white">
-                        <i class="fa fa-trash mr-1"></i>
-                        Delete Selected
-                    </button>
-                    <span class="px-2  inline-block" v-if="selectedUsers.length">Selected {{selectedUsers.length}} {{selectedUsers.length>1 ? 'users':'user'}}</span>
                 </div>
-                <input v-model="searchQuery" type="text" name="search" id="search" class="rounded-md border-0 h-[40px] pl-3 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Search..." />
+                <div>
+                    <button @click="getAppointments()" type="button" class="btn mr-1 btn-default">
+                        <span class="mr-1">All</span>
+                        <span class="badge badge-pill badge-info">0</span>
+                    </button>
+                    <button @click="getAppointments(appointmentsStatus.scheduled)" type="button" class="btn mr-1 btn-default">
+                        <span class="mr-1">Scheduled</span>
+                        <span class="badge badge-pill badge-primary">0</span>
+                    </button>
+                    <button @click="getAppointments(appointmentsStatus.confirmed)" type="button" class="btn mr-1 btn-default">
+                        <span class="mr-1">Confirmed</span>
+                        <span class="badge badge-pill badge-success">0</span>
+                    </button>
+                    <button @click="getAppointments(appointmentsStatus.cancelled)" type="button" class="btn btn-default">
+                        <span class="mr-1">Cancelled</span>
+                        <span class="badge badge-pill badge-danger">0</span>
+                    </button>
+                </div>
             </div>
             <TransitionRoot as="template" :show="isDialog">
                 <Dialog as="div" class="relative z-10 " @close="isDialog = false">
@@ -259,15 +222,15 @@ onMounted(() => {
                                     class="mt-72 relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
                                     <div class="mt-3 sm:ml-4 sm:mt-0 sm:text-left px-2">
                                         <DialogTitle v-if="editMode" as="h3"
-                                                     class="text-base font-semibold leading-6 text-gray-900">Edit user
+                                                     class="text-base font-semibold leading-6 text-gray-900">Edit appointment
                                         </DialogTitle>
                                         <DialogTitle v-else as="h3"
                                                      class="text-base font-semibold leading-6 text-gray-900">Add new
-                                            user
+                                            appointment
                                         </DialogTitle>
                                     </div>
                                     <Form @submit="handleSubmit"
-                                          :validation-schema="editMode ? editUserSchema : createUserSchema"
+                                          :validation-schema="editMode ? editAppointmentSchema : createAppointmentSchema"
                                           :initial-values="formValues"
                                           v-slot="{errors}">
                                         <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 ">
@@ -314,47 +277,43 @@ onMounted(() => {
                     </div>
                 </Dialog>
             </TransitionRoot>
-
             <div class="relative shadow-md sm:rounded-lg">
                 <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                         <th scope="col" class="px-6 py-3">
-                        <input @change="selectAllUsers" v-model="selectAll" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                        </th>
-                        <th scope="col" class="px-6 py-3">
                             id
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            Name
+                            Client Name
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            Email
+                            Date
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            Registered Date
+                            Time
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            Role
+                            Status
                         </th>
                         <th scope="col" class="px-6 py-3 text-center">
                             Options
                         </th>
                     </tr>
                     </thead>
-                    <tbody v-if="users.data.length">
-                    <UserListItem v-for="user in users.data" :key="user.id" :user="user" :select-all="selectAll"
-                        @show-danger-dialog="showDangerDialog"
-                        @edit-user="editUser"
-                        @toggle-selection="toggleSelection" />
+                    <tbody v-if="appointments.data.length">
+                    <AppointmentListItem v-for="appointment in appointments.data" :key="appointment.client_id" :appointment="appointment"
+                                  @show-danger-dialog="showDangerDialog"
+                                  @edit-appointment="editAppointment"
+                                  />
 
                     </tbody>
                     <tbody v-else>
-                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                            <th colspan="6" class="text-center px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                No results found...
-                            </th>
-                        </tr>
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                        <th colspan="6" class="text-center px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                            No results found...
+                        </th>
+                    </tr>
                     </tbody>
                 </table>
             </div>
@@ -362,11 +321,13 @@ onMounted(() => {
         </div>
         <div class="pt-4 flex justify-center">
             <Bootstrap5Pagination
-                :data="users"
-                @pagination-change-page="getUsers"
+                :data="appointments"
+                @pagination-change-page="getAppointments"
             />
         </div>
     </div>
 </template>
 
+<style scoped>
 
+</style>
