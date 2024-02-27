@@ -107,7 +107,7 @@ const deleteUser = () => {
         .then(resp => {
             // const index = users.value.findIndex(user => user.id === userId.value);
             // users.value.splice(index,1);
-            users.value = users.value.filter(user => user.id !== userId.value);
+            users.value.data = users.value.data.filter(user => user.id !== userId.value);
             toastr.success('User deleted successful');
             isDangerDialog.value=false;
         }).catch(err=>{

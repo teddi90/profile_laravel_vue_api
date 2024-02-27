@@ -23,6 +23,7 @@
         "@vitejs/plugin-vue": "^5.0.4",
         "@vue-hero-icons/outline": "^1.7.2",
         "@vue-hero-icons/solid": "^1.7.2",
+        "flatpickr": "^4.6.13",
         "flowbite": "^2.3.0",
         "flowbite-vue": "^0.1.2",
         "laravel-vue-pagination": "^4.1.3",
