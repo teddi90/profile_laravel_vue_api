@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\AppointmentController;
+use App\Http\Controllers\Admin\AppointmentStatusController;
+use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ApplicationController;
@@ -24,7 +27,31 @@ use Illuminate\Support\Facades\Route;
 //     return view('dashboard');
 // });
 
-Route::get('{view}',ApplicationController::class)->where('view','(.*)');
+//Route::get('{view}',ApplicationController::class)->where('view','(.*)');
+
+Route::get('{view}',ApplicationController::class)->where('view','(.*)')->middleware('auth');
+
+//Route::middleware('auth')->group(function (){
+//Route::get('/api/clients',[ClientController::class,'index']);
+//
+//Route::get('/api/users',[UserController::class,'index']);
+//Route::post('/api/users',[UserController::class,'store']);
+//Route::put('/api/users/{user}',[UserController::class,'update']);
+//Route::patch('/api/users/{user}/change-role',[UserController::class,'changeRole']);
+//Route::delete('/api/users/{user}',[UserController::class,'destroy']);
+//Route::delete('/api/users/',[UserController::class,'bulkDelete']);
+//
+//Route::prefix('/api/appointments')->group(function (){
+//    Route::get('/',[AppointmentController::class,'index']);
+//    Route::post('/create',[AppointmentController::class,'store']);
+//    Route::get('{appointment}/edit',[AppointmentController::class,'edit']);
+//    Route::put('{appointment}/edit',[AppointmentController::class,'update']);
+//    Route::delete('{appointment}',[AppointmentController::class,'destroy']);
+//
+//});
+//Route::get('appointments-status',[AppointmentStatusController::class,'getStatusWithCount']);
+//});
+
 
 
 Route::get('/api/settings', [SettingController::class, 'index']);

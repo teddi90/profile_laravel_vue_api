@@ -17,17 +17,17 @@ const toastr = useToaster();
 const userId=ref();
 const searchQuery=ref(null);
 
-const searchUser=async()=>{
-    await axios.get('/api/users/search',{
-        params:{
-            query:searchQuery.value
-        }
-    }).then(resp=>{
-        users.value=resp.data;
-    }).catch(err=>{
-        console.log(err)
-    })
-}
+// const searchUser=async()=>{
+//     await axios.get('/api/users/search',{
+//         params:{
+//             query:searchQuery.value
+//         }
+//     }).then(resp=>{
+//         users.value=resp.data;
+//     }).catch(err=>{
+//         console.log(err)
+//     })
+// }
 
 const createUserSchema = yup.object({
     name: yup.string().required(),
@@ -51,7 +51,7 @@ watch(isDialog, () => {
     }
 });
 watch(searchQuery,debounce(()=>{
-   searchUser();
+   getUsers();
 },300));
 const handleSubmit = (values, actions) => {
     if (editMode.value) {
@@ -114,9 +114,10 @@ const deleteUser = () => {
         console.log(err);
     })
 }
-
 const getUsers = async (page=1) => {
-    const response = await axios(`/api/users?page=${page}`);
+    const response = await axios(`/api/users?page=${page}`, {
+        params:{query: searchQuery.value}
+    });
     users.value = response.data;
     selectedUsers.value=[];
     selectAll.value=false;

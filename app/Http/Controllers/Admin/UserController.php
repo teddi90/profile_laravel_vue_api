@@ -10,11 +10,25 @@ use App\Models\Setting;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users=User::latest()->paginate(10);
+        // Validate input and sanitize data
+        $validated = $request->validate([
+            'query' => 'nullable|string', // Define explicit field and type
+        ]);
 
-        return $users;
+        $searchQuery = $validated['query'] ?? null; // Extract search term if present
+
+        // Build secure query using Eloquent query builder methods
+        $query = User::query();
+
+        if (!empty($searchQuery)) {
+            $query->where('name', 'like', "%{$searchQuery}%"); // Placeholder, use parameterized query
+        }
+
+        $users = $query->latest()->paginate(10);
+
+        return response()->json($users);
     }
 
     public function store(Request $request)
@@ -70,36 +84,4 @@ class UserController extends Controller
         return response()->json(['message'=>'Users deleted successfully!']);
     }
 
-//    public function search(Request $request)
-//    {
-//        $searchQuery=$request->query;
-//
-//        $users=User::where('name','like',"%{$searchQuery}%")->get();
-//
-//        return response()->json($users);
-//    }
-
-    public function search(Request $request)
-    {
-        // Validate input and sanitize data
-        $validated = $request->validate([
-            'query' => 'nullable|string', // Define explicit field and type
-        ]);
-
-        $searchQuery = $validated['query'] ?? null; // Extract search term if present
-
-        // Build secure query using Eloquent query builder methods
-        $query = User::query();
-
-        if (!empty($searchQuery)) {
-            $query->where('name', 'like', "%{$searchQuery}%"); // Placeholder, use parameterized query
-        }
-
-        $users = $query->paginate(10);
-
-        // Consider pagination for large datasets
-        // $users = $query->paginate(15); // Adjust page size as needed
-
-        return response()->json($users);
-    }
 }

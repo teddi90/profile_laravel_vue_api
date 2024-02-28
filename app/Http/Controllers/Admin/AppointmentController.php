@@ -75,6 +75,6 @@ class AppointmentController extends Controller
     {
         $appointment->delete();
 
-        return response()->noContent();
+        return response()->json(['success'=>true],200);
     }
 }
