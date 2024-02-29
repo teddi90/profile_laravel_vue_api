@@ -26,7 +26,7 @@ class UserController extends Controller
             $query->where('name', 'like', "%{$searchQuery}%"); // Placeholder, use parameterized query
         }
 
-        $users = $query->latest()->paginate(10);
+        $users = $query->latest()->paginate(settings('pagination_limit'));
 
         return response()->json($users);
     }

@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\AppointmentStatusController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardStatController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     Route::get('clients',[ClientController::class,'index']);
     Route::get('stats/appointments',[DashboardStatController::class,'appointments']);
     Route::get('stats/users',[DashboardStatController::class,'users']);
+    Route::get('settings',[SettingController::class,'index']);
+    Route::post('settings',[SettingController::class,'update']);
 
     Route::get('users',[UserController::class,'index']);
     Route::post('users',[UserController::class,'store']);

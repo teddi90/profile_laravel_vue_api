@@ -59,7 +59,7 @@ watch(selected,()=>{
             {{ user.email }}
         </td>
         <td class="px-6 py-4">
-            {{ formatDate(user.created_at) }}
+            {{ user.formatted_created_at }}
         </td>
         <td class="px-6 py-2">
             <Listbox as="div" v-model="selected" >

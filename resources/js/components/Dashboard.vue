@@ -81,7 +81,7 @@ onMounted(()=>{
                             <div class="d-flex justify-content-between">
                                 <h3>{{totalUsersCount}}</h3>
                                 <select @change="getUsersCount()" v-model="selectedDateRange"
-                                    style=" outline: 2px solid transparent;" class="leading-[20px] align-middle h-[35px] w-[105px] px-1 rounded border-0 text-black">
+                                    style=" outline: 2px solid transparent;" class="leading-[20px] align-middle h-[35px] w-[125px] px-1 rounded border-0 text-black">
                                     <option value="today">Today</option>
                                     <option value="30_days">30 days</option>
                                     <option value="60_days">60 days</option>

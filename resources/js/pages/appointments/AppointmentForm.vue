@@ -2,7 +2,7 @@
 import {onMounted, reactive,ref} from 'vue';
 import {useToaster} from "../../toastr.js";
 import {useRoute, useRouter} from "vue-router";
-import {Field, Form} from "vee-validate";
+import { Form} from "vee-validate";
 import flatpickr from "flatpickr";
 import 'flatpickr/dist/themes/material_blue.css';
 
