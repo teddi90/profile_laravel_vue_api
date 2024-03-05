@@ -39,6 +39,8 @@ Route::group(['middleware'=>'auth','prefix'=>'api'],function () {
     });
     Route::post('upload-profile-image', [ProfileController::class, 'uploadImage']);
 
+    Route::post('change-user-password', [ProfileController::class, 'changePassword']);
+
 
     Route::prefix('users')->group(function () {
         Route::get('/', [UserController::class, 'index']);

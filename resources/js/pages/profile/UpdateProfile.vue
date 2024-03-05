@@ -1,27 +1,25 @@
 <script setup>
-import {onMounted, ref} from 'vue';
+import {onMounted, ref,reactive} from 'vue';
 import {useToaster} from "../../toastr.js";
+import {useAuthUserStore} from "../../stores/AuthUserStore.js";
 
+const authUserStore = useAuthUserStore();
+const changePasswordForm = reactive({
+    currentPassword:'',
+    password:'',
+    passwordConfirmation:'',
+});
 const toastr=useToaster();
 const errors=ref();
-const form=ref({
-    name:'',
-    email:'',
-    role:'',
-    avatar:'',
-});
+
 const fileInput=ref(null);
-const profilePictureUrl=ref(null);
-const getUser=()=>{
-    axios.get('/api/profile')
-        .then(resp=>{
-            form.value=resp.data
-        }).catch(error=>{
-        console.log(error)
-    })
-}
+
 const updateProfile=()=>{
-    axios.put('/api/profile',form.value)
+    axios.put('/api/profile',{
+        name:authUserStore.user.name,
+        email:authUserStore.user.email,
+        role:authUserStore.user.role,
+    })
         .then(resp=>{
             toastr.success('Profile updated successfully');
         }).catch(error=> {
@@ -35,11 +33,11 @@ const openFileInput=()=>{
 }
 const handleFileChange=(event)=>{
     const file = event.target.files[0];
-    profilePictureUrl.value = URL.createObjectURL(file);
+    authUserStore.user.avatar=URL.createObjectURL(file);
 
     const formData=new FormData();
     formData.append('profile_picture',file);
-    console.log(formData)
+
     axios.post('/api/upload-profile-image',formData)
         .then(resp=>{
             toastr.success('Image uploaded successfully');
@@ -47,9 +45,21 @@ const handleFileChange=(event)=>{
         console.log(err)
     })
 }
-onMounted(()=>{
-    getUser();
-})
+const handleChangePassword=()=>{
+    errors.value="";
+    axios.post('/api/change-user-password',changePasswordForm)
+        .then(resp=>{
+            toastr.success(resp.data.message)
+          for(const filed in changePasswordForm){
+              changePasswordForm[filed]="";
+          }
+        }).catch(error=> {
+            if (error.response && error.response.status === 422) {
+                errors.value = error.response.data.errors;
+            }
+        })
+}
+
 </script>
 
 <template>
@@ -77,12 +87,12 @@ onMounted(()=>{
                             <input
                                 @change="handleFileChange"
                                 ref="fileInput" type="file" class="d-none">
-                            <img @click="openFileInput" class="profile-user-img img-circle" :src="profilePictureUrl ? profilePictureUrl : form.avatar" alt="User profile picture">
+                            <img @click="openFileInput" class="profile-user-img img-circle" :src="authUserStore.user.avatar" alt="User profile picture">
                         </div>
 
-                        <h3 class="profile-username text-center">{{form.name}}</h3>
+                        <h3 class="profile-username text-center">{{authUserStore.user.name}}</h3>
 
-                        <p class="text-muted text-center">{{form.role}}</p>
+                        <p class="text-muted text-center">{{authUserStore.user.role}}</p>
                     </div>
                 </div>
             </div>
@@ -103,7 +113,7 @@ onMounted(()=>{
                                     <div class="form-group row">
                                         <label for="inputName" class="col-sm-2 col-form-label">Name</label>
                                         <div class="col-sm-10">
-                                            <input v-model="form.name" type="text" class="form-control" id="inputName" placeholder="Name">
+                                            <input v-model="authUserStore.user.name" type="text" class="form-control" id="inputName" placeholder="Name">
                                             <span v-if="errors && errors.name"
                                                   class="text-danger text-sm">{{errors.name[0]}}</span>
                                         </div>
@@ -111,7 +121,7 @@ onMounted(()=>{
                                     <div class="form-group row">
                                         <label for="inputEmail" class="col-sm-2 col-form-label">Email</label>
                                         <div class="col-sm-10">
-                                            <input v-model="form.email" type="email" class="form-control " id="inputEmail" placeholder="Email">
+                                            <input v-model="authUserStore.user.email" type="email" class="form-control " id="inputEmail" placeholder="Email">
                                             <span v-if="errors && errors.email"
                                                   class="text-danger text-sm">{{errors.email[0]}}</span>
                                         </div>
@@ -127,26 +137,32 @@ onMounted(()=>{
                             </div>
 
                             <div class="tab-pane" id="changePassword">
-                                <form class="form-horizontal">
+                                <form @submit.prevent="handleChangePassword" class="form-horizontal">
                                     <div class="form-group row">
                                         <label for="currentPassword" class="col-sm-3 col-form-label">Current
                                             Password</label>
                                         <div class="col-sm-9">
-                                            <input type="password" class="form-control " id="currentPassword" placeholder="Current Password">
+                                            <input v-model="changePasswordForm.currentPassword" type="password" class="form-control " id="currentPassword" placeholder="Current Password">
+                                            <span v-if="errors && errors.current_password"
+                                                  class="text-danger text-sm">{{errors.current_password[0]}}</span>
                                         </div>
                                     </div>
                                     <div class="form-group row">
                                         <label for="newPassword" class="col-sm-3 col-form-label">New
                                             Password</label>
                                         <div class="col-sm-9">
-                                            <input type="password" class="form-control " id="newPassword" placeholder="New Password">
+                                            <input v-model="changePasswordForm.password" type="password" class="form-control " id="newPassword" placeholder="New Password">
+                                            <span v-if="errors && errors.password"
+                                                  class="text-danger text-sm">{{errors.password[0]}}</span>
                                         </div>
                                     </div>
                                     <div class="form-group row">
                                         <label for="passwordConfirmation" class="col-sm-3 col-form-label">Confirm
                                             New Password</label>
                                         <div class="col-sm-9">
-                                            <input type="password" class="form-control " id="passwordConfirmation" placeholder="Confirm New Password">
+                                            <input v-model="changePasswordForm.passwordConfirmation" type="password" class="form-control " id="passwordConfirmation" placeholder="Confirm New Password">
+                                            <span v-if="errors && errors.password_confirmation"
+                                                  class="text-danger text-sm">{{errors.password_confirmation[0]}}</span>
                                         </div>
                                     </div>
                                     <div class="form-group row">
