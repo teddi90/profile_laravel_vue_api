@@ -24,6 +24,7 @@
         "@vitejs/plugin-vue": "^5.0.4",
         "@vue-hero-icons/outline": "^1.7.2",
         "@vue-hero-icons/solid": "^1.7.2",
+        "@vueuse/core": "^10.9.0",
         "flatpickr": "^4.6.13",
         "flowbite": "^2.3.0",
         "flowbite-vue": "^0.1.2",

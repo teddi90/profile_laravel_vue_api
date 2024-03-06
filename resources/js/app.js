@@ -22,12 +22,18 @@ const router=createRouter({
     routes:Routes,
     history:createWebHistory(),
 });
-router.beforeEach((to,form)=>{
+router.beforeEach(async (to,form)=>{
     const authUserStore=useAuthUserStore();
     if(authUserStore.user.name==='' && to.name !=='admin.login'){
-        authUserStore.getAuthUser();
         const settingStore=useSettingStore();
-        settingStore.getSetting();
+       await Promise.all([
+           authUserStore.getAuthUser(),
+           settingStore.getSetting(),
+
+       ]);
+        // await authUserStore.getAuthUser();
+        //
+        // await settingStore.getSetting();
     }
 })
 

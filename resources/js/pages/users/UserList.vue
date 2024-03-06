@@ -238,7 +238,7 @@ onMounted(() => {
                     </button>
                     <span class="px-2  inline-block" v-if="selectedUsers.length">Selected {{selectedUsers.length}} {{selectedUsers.length>1 ? 'users':'user'}}</span>
                 </div>
-                <input v-model="searchQuery" type="text" name="search" id="search" class="rounded-md border-0 h-[40px] pl-3 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Search..." />
+                <input v-model="searchQuery" type="text" name="search" id="search" class="rounded-md border-0 h-[40px] pl-3 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-600 dark:text-gray-400" placeholder="Search..." />
             </div>
             <TransitionRoot as="template" :show="isDialog">
                 <Dialog as="div" class="relative z-10 " @close="isDialog = false">
@@ -320,7 +320,7 @@ onMounted(() => {
                 <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
-                        <th scope="col" class="px-6 py-3">
+                        <th scope="col" class="px-6 py-3 dark:bg-gray-700 dark:text-gray-400">
                         <input @change="selectAllUsers" v-model="selectAll" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                         </th>
                         <th scope="col" class="px-6 py-3">
