@@ -4,12 +4,14 @@ import {computed, onMounted, ref} from "vue";
 import {useToaster} from "../../toastr.js";
 import {Bootstrap5Pagination} from "laravel-vue-pagination";
 import Swal from 'sweetalert2'
-import '@sweetalert2/theme-bulma/bulma.css'
+import '@sweetalert2/theme-bulma/bulma.css';
+import Prelodaer from "../../components/Prelodaer.vue";
 
 const appointmentsStatus=ref([]);
 const selectedStatus=ref();
 const appointments = ref({data:[]});
 const toastr = useToaster();
+const loading=ref(false);
 
 const getAppointmentStatus=()=>{
     axios.get('/api/appointments-status')
@@ -22,6 +24,7 @@ const appointmentsCount =computed(()=>{
 });
 
 const getAppointments = async (status, page=1) => {
+    loading.value=true;
     selectedStatus.value=status;
     const params={};
     if(status){
@@ -29,6 +32,8 @@ const getAppointments = async (status, page=1) => {
     }
     const resp = await axios.get(`/api/appointments?page=${page}`,{params:params});
     appointments.value = resp.data;
+    loading.value=false;
+
 }
 const updateAppointmentStatusCount=(id)=>{
     const deletedAppointmentStatus= appointments.value.data.find(appointment=>appointment.id===id).status.name;
@@ -88,6 +93,8 @@ onMounted(()=>{
     </div>
 
     <div class="content">
+       <Prelodaer :loading="loading"/>
+
         <div class="container-fluid">
             <div class="flex justify-between">
                 <div class="mb-3 flex items-center">

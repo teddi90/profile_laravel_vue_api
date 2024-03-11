@@ -8,6 +8,7 @@ import {useToaster} from "../../toastr.js";
 import UserListItem from "./UserListItem.vue";
 import {debounce} from "lodash-es";
 import { Bootstrap5Pagination } from 'laravel-vue-pagination';
+import Prelodaer from "../../components/Prelodaer.vue";
 const isDialog = ref(false);
 const isDangerDialog = ref(false);
 const users = ref({data:[]});
@@ -16,6 +17,7 @@ const formValues = ref();
 const toastr = useToaster();
 const userId=ref();
 const searchQuery=ref(null);
+const loading=ref(false);
 
 // const searchUser=async()=>{
 //     await axios.get('/api/users/search',{
@@ -115,12 +117,15 @@ const deleteUser = () => {
     })
 }
 const getUsers = async (page=1) => {
+    loading.value=true;
     const response = await axios(`/api/users?page=${page}`, {
         params:{query: searchQuery.value}
     });
     users.value = response.data;
+    loading.value=false;
     selectedUsers.value=[];
     selectAll.value=false;
+
 }
 const selectedUsers=ref([]);
 const toggleSelection=(user)=>{
@@ -161,6 +166,7 @@ onMounted(() => {
 </script>
 
 <template>
+    <Prelodaer :loading="loading"/>
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
